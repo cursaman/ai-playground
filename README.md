@@ -2,14 +2,14 @@
 
 Next.js로 AI 기능을 배우고 직접 만들어보는 실험 프로젝트입니다.
 
-## 시작하기
+## 테스트 방법
 
-```bash
-npm install
-npm run dev
-```
+이 프로젝트는 로컬 개발 서버 대신 Vercel 배포 URL에서 테스트합니다. 모든 기능 작업은 다음 순서로 진행합니다.
 
-브라우저에서 `http://localhost:3000`을 엽니다.
+1. 코드 작성 및 자동 검사
+2. GitHub `main` 브랜치에 푸시
+3. Vercel 자동 배포 완료 확인
+4. 배포 URL에서 기능 테스트
 
 ## 기술 구성
 
@@ -25,9 +25,9 @@ npm run dev
 
 ## Vercel 배포
 
-1. 변경 사항을 GitHub의 `main` 브랜치에 푸시합니다.
-2. Vercel에서 GitHub 저장소 `cursaman/ai-playground`를 가져옵니다.
-3. Framework Preset이 `Next.js`인지 확인하고 배포합니다.
+1. Vercel에서 GitHub 저장소 `cursaman/ai-playground`를 한 번 연결합니다.
+2. Framework Preset이 `Next.js`인지 확인하고 첫 배포를 실행합니다.
+3. 이후 `main` 브랜치가 갱신되면 Vercel이 자동으로 프로덕션을 배포합니다.
 4. AI API 키가 생기면 Vercel 프로젝트의 Environment Variables에 등록합니다.
 
 `.env` 파일과 API 키는 Git에 커밋하지 않습니다.
