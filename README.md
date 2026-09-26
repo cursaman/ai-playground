@@ -21,6 +21,7 @@ npm run dev
 
 - [4주 AI 입문 계획표](LEARNING_PLAN.md)
 - [1주차 상세 계획과 실습](WEEK_1.md)
+- [개발 계획표](DEVELOPMENT_PLAN.md)
 
 ## Vercel 배포
 
