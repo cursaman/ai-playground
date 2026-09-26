@@ -15,6 +15,7 @@ Next.js로 AI 기능을 배우고 직접 만들어보는 실험 프로젝트입�
 
 - Next.js (App Router)
 - React + TypeScript
+- OpenAI Responses API + Structured Outputs
 - Vercel 배포
 
 ## 학습 계획
@@ -31,3 +32,23 @@ Next.js로 AI 기능을 배우고 직접 만들어보는 실험 프로젝트입�
 4. AI API 키가 생기면 Vercel 프로젝트의 Environment Variables에 등록합니다.
 
 `.env` 파일과 API 키는 Git에 커밋하지 않습니다.
+
+필요한 환경변수는 [`.env.example`](.env.example)을 참고합니다.
+
+| 변수 | 설명 |
+|---|---|
+| `OPENAI_API_KEY` | 서버에서만 사용하는 OpenAI API 키 |
+| `OPENAI_MODEL` | 선택 사항이며 기본값은 `gpt-6-astra` |
+
+## 학습 API
+
+`POST /api/learn`
+
+```json
+{
+  "topic": "생성형 AI의 토큰",
+  "level": "beginner"
+}
+```
+
+성공하면 설명, 예시, 확인 문제 세 개를 구조화된 JSON으로 반환합니다. 현재 화면과 API의 연결은 4단계에서 진행합니다.
