@@ -76,9 +76,9 @@ API 키는 `.env.local`에서만 관리하고 Git에는 저장하지 않습니�
 - [x] Next.js, TypeScript, App Router 기본 구조 작성
 - [x] 반응형 시작 화면 작성
 - [x] GitHub 저장소 연결
-- [ ] 패키지 설치 및 잠금 파일 생성
-- [ ] `npm run lint` 통과
-- [ ] `npm run build` 통과
+- [x] 패키지 설치 및 잠금 파일 생성
+- [x] `npm run lint` 통과
+- [x] `npm run build` 통과
 
 **완료 기준:** 새 환경에서 `npm install` 후 개발 서버와 빌드가 정상 동작한다.
 
