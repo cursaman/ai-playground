@@ -1,3 +1,5 @@
+import LearningForm from "./components/LearningForm";
+
 const steps = [
   ["01", "AI 기초", "생성형 AI의 원리와 한계를 이해합니다."],
   ["02", "Next.js", "웹에서 아이디어를 직접 구현합니다."],
@@ -18,9 +20,17 @@ export default function Home() {
           AI Playground는 Next.js로 작은 실험을 만들고, 기록하고,
           배포하는 학습 프로젝트입니다.
         </p>
-        <a className="button" href="#roadmap">
-          로드맵 보기
+        <a className="button" href="#learn">
+          지금 시작하기
         </a>
+      </section>
+
+      <section className="learn" id="learn" aria-labelledby="learn-title">
+        <div className="sectionHeading">
+          <p>LEARNING REQUEST</p>
+          <h2 id="learn-title">궁금한 것을 학습 요청으로</h2>
+        </div>
+        <LearningForm />
       </section>
 
       <section className="roadmap" id="roadmap" aria-labelledby="roadmap-title">
