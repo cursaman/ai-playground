@@ -1,28 +1,58 @@
 "use client";
 
-import { FormEvent, useId, useState } from "react";
+import { FormEvent, useEffect, useId, useRef, useState } from "react";
+import LearningResult, { type LearningMaterial } from "./LearningResult";
 
 const MAX_TOPIC_LENGTH = 80;
 
 type Level = "beginner" | "intermediate";
+type RequestStatus = "idle" | "loading" | "success" | "error";
 
-type LearningRequest = {
-  topic: string;
-  level: Level;
-};
+function isLearningMaterial(value: unknown): value is LearningMaterial {
+  if (!value || typeof value !== "object") return false;
 
-const levelLabels: Record<Level, string> = {
-  beginner: "입문",
-  intermediate: "중급",
-};
+  const material = value as Partial<LearningMaterial>;
+  return (
+    typeof material.explanation === "string" &&
+    typeof material.example === "string" &&
+    Array.isArray(material.quiz) &&
+    material.quiz.every(
+      (item) =>
+        item &&
+        typeof item.question === "string" &&
+        typeof item.answer === "string",
+    )
+  );
+}
+
+function getErrorMessage(value: unknown) {
+  if (
+    value &&
+    typeof value === "object" &&
+    "error" in value &&
+    typeof value.error === "string"
+  ) {
+    return value.error;
+  }
+
+  return "학습 자료를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+}
 
 export default function LearningForm() {
   const topicId = useId();
   const errorId = useId();
+  const topicInputRef = useRef<HTMLInputElement>(null);
+  const requestControllerRef = useRef<AbortController | null>(null);
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState<Level>("beginner");
-  const [error, setError] = useState("");
-  const [request, setRequest] = useState<LearningRequest | null>(null);
+  const [fieldError, setFieldError] = useState("");
+  const [requestError, setRequestError] = useState("");
+  const [status, setStatus] = useState<RequestStatus>("idle");
+  const [material, setMaterial] = useState<LearningMaterial | null>(null);
+
+  useEffect(() => {
+    return () => requestControllerRef.current?.abort();
+  }, []);
 
   function validateTopic(value: string) {
     const trimmedTopic = value.trim();
@@ -42,32 +72,99 @@ export default function LearningForm() {
     return "";
   }
 
+  function clearResponse() {
+    requestControllerRef.current?.abort();
+    requestControllerRef.current = null;
+    setRequestError("");
+    setMaterial(null);
+    setStatus("idle");
+  }
+
+  async function createLearningMaterial(requestTopic: string, requestLevel: Level) {
+    requestControllerRef.current?.abort();
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
+
+    setRequestError("");
+    setMaterial(null);
+    setStatus("loading");
+
+    try {
+      const response = await fetch("/api/learn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: requestTopic, level: requestLevel }),
+        signal: controller.signal,
+      });
+
+      const responseBody: unknown = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(getErrorMessage(responseBody));
+      }
+
+      if (!isLearningMaterial(responseBody)) {
+        throw new Error("학습 자료의 형식을 확인할 수 없습니다. 다시 시도해 주세요.");
+      }
+
+      setMaterial(responseBody);
+      setStatus("success");
+    } catch (error) {
+      if (controller.signal.aborted) return;
+
+      setRequestError(
+        error instanceof Error
+          ? error.message
+          : "학습 자료를 불러오지 못했습니다. 다시 시도해 주세요.",
+      );
+      setStatus("error");
+    } finally {
+      if (requestControllerRef.current === controller) {
+        requestControllerRef.current = null;
+      }
+    }
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const validationError = validateTopic(topic);
     if (validationError) {
-      setError(validationError);
-      setRequest(null);
+      setFieldError(validationError);
+      clearResponse();
+      topicInputRef.current?.focus();
       return;
     }
 
-    setError("");
-    setRequest({ topic: topic.trim(), level });
+    setFieldError("");
+    void createLearningMaterial(topic.trim(), level);
   }
 
   function handleReset() {
+    clearResponse();
     setTopic("");
     setLevel("beginner");
-    setError("");
-    setRequest(null);
+    setFieldError("");
+    topicInputRef.current?.focus();
+  }
+
+  function handleAskAgain() {
+    clearResponse();
+    setTopic("");
+    setFieldError("");
+    topicInputRef.current?.focus();
   }
 
   return (
     <div className="learningPanel">
-      <form className="learningForm" onSubmit={handleSubmit} noValidate>
+      <form
+        className="learningForm"
+        onSubmit={handleSubmit}
+        aria-busy={status === "loading"}
+        noValidate
+      >
         <div className="formHeader">
-          <span className="stepBadge">STEP 02</span>
+          <span className="stepBadge">STEP 04</span>
           <h3>오늘은 무엇을 배워볼까요?</h3>
           <p>궁금한 주제와 현재 난이도를 선택해 주세요.</p>
         </div>
@@ -80,23 +177,24 @@ export default function LearningForm() {
             </span>
           </div>
           <input
+            ref={topicInputRef}
             id={topicId}
             name="topic"
             type="text"
             value={topic}
             maxLength={MAX_TOPIC_LENGTH}
             placeholder="예: 생성형 AI의 토큰"
-            aria-describedby={error ? errorId : undefined}
-            aria-invalid={Boolean(error)}
+            aria-describedby={fieldError ? errorId : undefined}
+            aria-invalid={Boolean(fieldError)}
             onChange={(event) => {
               setTopic(event.target.value);
-              if (error) setError("");
-              if (request) setRequest(null);
+              if (fieldError) setFieldError("");
+              if (status !== "idle") clearResponse();
             }}
           />
-          {error && (
+          {fieldError && (
             <p className="fieldError" id={errorId} role="alert">
-              {error}
+              {fieldError}
             </p>
           )}
         </div>
@@ -112,7 +210,7 @@ export default function LearningForm() {
                 checked={level === "beginner"}
                 onChange={() => {
                   setLevel("beginner");
-                  setRequest(null);
+                  if (status !== "idle") clearResponse();
                 }}
               />
               <span>
@@ -128,7 +226,7 @@ export default function LearningForm() {
                 checked={level === "intermediate"}
                 onChange={() => {
                   setLevel("intermediate");
-                  setRequest(null);
+                  if (status !== "idle") clearResponse();
                 }}
               />
               <span>
@@ -140,8 +238,12 @@ export default function LearningForm() {
         </fieldset>
 
         <div className="formActions">
-          <button className="submitButton" type="submit">
-            학습 요청 만들기
+          <button
+            className="submitButton"
+            type="submit"
+            disabled={status === "loading"}
+          >
+            {status === "loading" ? "학습 자료 만드는 중…" : "학습 자료 만들기"}
           </button>
           <button className="resetButton" type="button" onClick={handleReset}>
             초기화
@@ -150,30 +252,44 @@ export default function LearningForm() {
       </form>
 
       <div className="requestPreview" aria-live="polite">
-        {request ? (
-          <div className="previewContent">
-            <p className="previewLabel">학습 요청 미리보기</p>
-            <h3>{request.topic}</h3>
-            <dl>
-              <div>
-                <dt>난이도</dt>
-                <dd>{levelLabels[request.level]}</dd>
-              </div>
-              <div>
-                <dt>답변 구성</dt>
-                <dd>쉬운 설명 · 예시 · 확인 문제</dd>
-              </div>
-            </dl>
-            <p className="previewNote">
-              다음 단계에서 AI API를 연결하면 이 요청으로 학습 자료를 만들 수
-              있어요.
-            </p>
-          </div>
-        ) : (
+        {status === "idle" && (
           <div className="emptyPreview">
             <span aria-hidden="true">✦</span>
-            <p>주제를 입력하면<br />학습 요청을 미리 보여드려요.</p>
+            <p>
+              주제를 입력하면
+              <br />AI가 학습 자료를 만들어드려요.
+            </p>
           </div>
+        )}
+
+        {status === "loading" && (
+          <div className="loadingPreview" role="status">
+            <span className="loadingMark" aria-hidden="true" />
+            <p>설명과 문제를 만들고 있어요.</p>
+            <small>잠시만 기다려 주세요.</small>
+          </div>
+        )}
+
+        {status === "error" && (
+          <div className="errorPreview" role="alert">
+            <span aria-hidden="true">!</span>
+            <h3>자료를 만들지 못했어요</h3>
+            <p>{requestError}</p>
+            <button
+              type="button"
+              onClick={() => void createLearningMaterial(topic.trim(), level)}
+            >
+              다시 시도하기
+            </button>
+          </div>
+        )}
+
+        {status === "success" && material && (
+          <LearningResult
+            topic={topic.trim()}
+            material={material}
+            onAskAgain={handleAskAgain}
+          />
         )}
       </div>
     </div>
