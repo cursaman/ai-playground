@@ -24,6 +24,7 @@ Next.js로 AI 기능을 배우고 직접 만들어보는 실험 프로젝트입�
 - [1주차 상세 계획과 실습](WEEK_1.md)
 - [개발 계획표](DEVELOPMENT_PLAN.md)
 - [품질 점검 보고서](QUALITY_REPORT.md)
+- [Vercel 배포 안내서](DEPLOYMENT.md)
 
 ## 품질 검사
 
