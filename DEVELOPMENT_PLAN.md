@@ -150,7 +150,7 @@ API 키는 `.env.local`에서만 관리하고 Git에는 저장하지 않습니�
 
 예상 시간: 0.5일
 
-- [ ] 변경 사항을 GitHub `main`에 푸시
+- [x] 변경 사항을 GitHub `main`에 푸시
 - [x] GitHub Actions 품질 검사 구성
 - [ ] Vercel에서 GitHub 저장소 가져오기
 - [ ] `main` 브랜치 자동 배포 활성화 확인
